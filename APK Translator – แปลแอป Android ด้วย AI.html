@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>APK Translator – แปลแอป Android ด้วย AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mu:#667085;--bd:#e3e6eb;--ac:#2563eb;--ok:#15803d;--wn:#b45309;--er:#b91c1c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1218;--card:#181c24;--tx:#eef0f4;--mu:#98a2b3;--bd:#2a303b;--ac:#6b9bff;--ok:#4ade80;--wn:#fbbf24;--er:#f87171}}
+:root[data-theme="dark"]{--bg:#0f1218;--card:#181c24;--tx:#eef0f4;--mu:#98a2b3;--bd:#2a303b;--ac:#6b9bff;--ok:#4ade80;--wn:#fbbf24;--er:#f87171}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 "Noto Sans Thai",system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 2px}p.s{color:var(--mu);margin:0 0 14px}
+.steps{display:flex;gap:6px;margin:12px 0;overflow-x:auto}
+.st{flex:1;min-width:84px;text-align:center;font-size:12px;padding:7px 4px;border-radius:8px;background:var(--card);border:1px solid var(--bd);color:var(--mu)}
+.st.on{border-color:var(--ac);color:var(--ac);font-weight:600}.st.done{color:var(--ok)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:12px}
+.drop{border:2px dashed var(--bd);border-radius:12px;padding:28px 12px;text-align:center;cursor:pointer;color:var(--mu)}
+.drop.hv{border-color:var(--ac)}
+button,select{font:inherit;padding:10px 14px;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:600}button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chk{padding:9px 10px;border-radius:8px;margin:6px 0;border:1px solid var(--bd);font-size:14px}
+.ok{border-left:4px solid var(--ok)}.wn{border-left:4px solid var(--wn)}.er{border-left:4px solid var(--er)}
+.tbl{max-height:380px;overflow:auto;border:1px solid var(--bd);border-radius:8px}
+.it{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px}.it:last-child{border:0}
+.it small{color:var(--mu);display:block;word-break:break-all}
+.it textarea{width:100%;font:inherit;background:transparent;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:6px;margin-top:4px;min-height:38px}
+.bar{height:8px;background:var(--bd);border-radius:5px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .2s}
+code{background:var(--bg);padding:2px 5px;border-radius:4px;font-size:12px;word-break:break-all}
+pre{background:var(--bg);padding:10px;border-radius:8px;overflow-x:auto;font-size:12px}
+.hid{display:none}
+</style></head><body><main>
+<h1>📦 APK Translator</h1>
+<p class="s">แปลข้อความในแอป Android ด้วย AI แล้วแพ็กไฟล์ใหม่ — ประมวลผลในเบราว์เซอร์ ไฟล์ไม่ถูกอัปโหลดไปไหน</p>
+<div class="steps" id="steps"></div>
+
+<section id="s1" class="card">
+ <label class="drop" id="drop" for="fi" style="display:block;position:relative">แตะหรือวางไฟล์ที่นี่<br><b>.apk .xapk .apks .apkm .zip</b>
+ <input type="file" id="fi" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0"></label>
+ <div id="info" style="margin-top:10px"></div>
+</section>
+
+<section id="s2" class="card hid">
+ <b>เลือกภาษาปลายทาง</b>
+ <div class="row" style="margin:10px 0"><select id="lang"></select>
+ <select id="tone"><option value="ธรรมชาติ">โทนธรรมชาติ</option><option value="ทางการ">ทางการ</option><option value="เป็นกันเอง">เป็นกันเอง</option></select></div>
+ <p class="s" id="cnt"></p>
+ <button class="p" id="go">เริ่มแปลด้วย AI</button> <button id="skip">แก้ไขเอง (ไม่ใช้ AI)</button>
+ <div class="bar hid" id="bar"><i></i></div><div id="pmsg" class="s"></div>
+</section>
+
+<section id="s3" class="card hid">
+ <b>ตรวจทานคำแปล</b> <span class="s" id="stat"></span>
+ <div class="tbl" id="tbl" style="margin-top:8px"></div>
+ <div style="margin-top:10px"><button class="p" id="chk">ตรวจสอบและแก้ไขอัตโนมัติ →</button></div>
+</section>
+
+<section id="s4" class="card hid">
+ <b>ผลตรวจสอบก่อนดาวน์โหลด</b><div id="rep"></div>
+ <div style="margin-top:10px" class="row"><button class="p" id="dl" disabled>ดาวน์โหลดไฟล์</button></div>
+ <div id="after"></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const LANGS=[["th","ไทย"],["en","อังกฤษ"],["ja","ญี่ปุ่น"],["ko","เกาหลี"],["zh","จีน (ตัวย่อ)"],["vi","เวียดนาม"],["id","อินโดนีเซีย"],["es","สเปน"],["fr","ฝรั่งเศส"],["de","เยอรมัน"],["pt","โปรตุเกส"],["ru","รัสเซีย"],["ar","อาหรับ"]];
+$('lang').innerHTML=LANGS.map(l=>`<option value="${l[1]}">${l[1]}</option>`).join('');
+const NAMES=["1 อัปโหลด","2 ภาษา","3 ตรวจทาน","4 ตรวจสอบ","5 ดาวน์โหลด"];
+function step(n){$('steps').innerHTML=NAMES.map((t,i)=>`<div class="st ${i+1==n?'on':i+1<n?'done':''}">${t}</div>`).join('')}step(1);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let file,targets=[],items=[],outName='',sampleFn=null,isContainer=false,fixes=[];
+
+// ---------- อัปโหลด ----------
+const drop=$('drop');
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('hv')};drop.ondragleave=()=>drop.classList.remove('hv');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hv');load(e.dataTransfer.files[0])};
+$('fi').onchange=e=>load(e.target.files[0]);
+
+// ---------- ดึงข้อความ ----------
+const okStr=s=>/\p{L}/u.test(s)&&!/^(https?:|[\w.]+\.[\w.]+$|@|#|\?)/.test(s.trim())&&s.trim().length>1;
+async function _load0(f){
+ if(!f)return;const ext=f.name.split('.').pop().toLowerCase();
+ if(!['apk','xapk','apks','apkm','zip'].includes(ext)){$('info').innerHTML='<div class="chk er">ไม่รองรับไฟล์นามสกุล .'+esc(ext)+'</div>';return}
+ file=f;targets=[];items=[];isContainer=false;$('info').innerHTML='กำลังอ่านไฟล์…';
+ try{
+  const z=await JSZip.loadAsync(f);const names=Object.keys(z.files);
+  const inner=names.filter(n=>/\.apk$/i.test(n)&&!z.files[n].dir);
+  if(names.includes('AndroidManifest.xml')||!inner.length)targets=[{zip:z,label:f.name}];
+  else{isContainer=true;for(const n of inner){const b=await z.file(n).async('uint8array');targets.push({zip:await JSZip.loadAsync(b),parent:z,path:n,label:n})}}
+  let id=0,bin=0;
+  for(let ti=0;ti<targets.length;ti++){const zz=targets[ti].zip;
+   for(const p of Object.keys(zz.files)){if(zz.files[p].dir)continue;
+    if(/(^|\/)(AndroidManifest\.xml|resources\.arsc)$/.test(p)){continue}
+    if(/\.xml$/i.test(p)&&/^res\/values\/(strings|arrays|plurals)[^/]*\.xml$/.test(p)){
+     const txt=await zz.file(p).async('string');if(txt.charCodeAt(0)===3){bin++;continue}
+     const d=new DOMParser().parseFromString(txt,'application/xml');if(d.querySelector('parsererror')){bin++;continue}
+     d.querySelectorAll('string,item').forEach((n,i)=>{if(n.getAttribute('translatable')==='false'||n.children.length)return;
+      const v=n.textContent;if(okStr(v)){n.setAttribute('data-i',i);items.push({id:id++,ti,p,kind:'xml',idx:i,key:n.getAttribute('name')||'item',src:v,out:v})}});
+    }else if(/\.(json)$/i.test(p)&&zz.files[p]._data&&!/^(res|META-INF)\//.test(p)){
+     try{const o=JSON.parse(await zz.file(p).async('string'));const walk=(x,path)=>{if(typeof x==='string'){if(okStr(x)&&x.length<500)items.push({id:id++,ti,p,kind:'json',path:path.slice(),key:path.join('.'),src:x,out:x})}else if(x&&typeof x==='object')for(const k in x){path.push(k);walk(x[k],path);path.pop()}};walk(o,[])}catch(e){}
+    }else if(/\.properties$/i.test(p)){
+     (await zz.file(p).async('string')).split(/\r?\n/).forEach((l,i)=>{const m=l.match(/^([^#!=:\s][^=:]*?)\s*[=:]\s*(.+)$/);if(m&&okStr(m[2]))items.push({id:id++,ti,p,kind:'prop',idx:i,key:m[1],src:m[2],out:m[2]})});
+    }
+   }}
+  if(items.length>3000)items.length=3000;
+  const pkg='';
+  $('info').innerHTML=`<div class="chk ok">✅ ${esc(f.name)} (${(f.size/1048576).toFixed(1)} MB) — พบ ${targets.length} แพ็กเกจย่อย<br>ข้อความที่แปลได้: <b>${items.length}</b> รายการ</div>`+
+   (items.length?'':'<div class="chk wn">⚠️ ไม่พบข้อความแบบอ่านได้ ไฟล์นี้น่าจะเก็บข้อความใน resources.arsc (binary) ซึ่งแก้ในเบราว์เซอร์ไม่ได้ — ถอดด้วย apktool แล้วบีบโฟลเดอร์เป็น .zip เพื่ออัปโหลดใหม่</div>')+
+   (bin?'<div class="chk wn">⚠️ มีไฟล์ strings แบบ binary '+bin+' ไฟล์ที่ข้ามไป</div>':'');
+  $('cnt').textContent=`ข้อความทั้งหมด ${items.length} รายการ`;
+  $('s2').classList.toggle('hid',!items.length);step(items.length?2:1);
+ }catch(e){$('info').innerHTML='<div class="chk er">อ่านไฟล์ไม่สำเร็จ: '+esc(e.message)+'</div>'}
+}
+$('fi').onchange=e=>{_load0(e.target.files[0]);e.target.value=''};
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hv');_load0(e.dataTransfer.files[0])};
+
+// ---------- แปลด้วย AI ----------
+async function getSample(){if(sampleFn)return sampleFn;try{const c=window.claude&&await window.claude.use('sample');sampleFn=c||null}catch(e){sampleFn=null}return sampleFn}
+$('go').onclick=async()=>{
+ const s=await getSample();if(!s){$('pmsg').textContent='ไม่พบความสามารถ AI ในมุมมองนี้ — ใช้ "แก้ไขเอง" แทน';return}
+ const lang=$('lang').value,tone=$('tone').value,B=40;$('go').disabled=true;$('bar').classList.remove('hid');
+ try{for(let i=0;i<items.length;i+=B){
+  const b=items.slice(i,i+B);$('pmsg').textContent=`กำลังแปล ${i+1}–${Math.min(i+B,items.length)} จาก ${items.length}`;
+  const r=await s.json(`แปลข้อความ UI ของแอป Android เป็นภาษา${lang} โทน${tone}\nกฎ: คง placeholder (%s %d %1$s {0} {name} \\n) ไว้เหมือนเดิมทุกตัว, ห้ามแปลชื่อแบรนด์/ชื่อแพ็กเกจ, คงความยาวใกล้เคียง, ไม่ใส่ markdown\nตอบเป็น JSON array ของ string ยาว ${b.length} รายการ เรียงตามลำดับเดิมเท่านั้น\n\n`+JSON.stringify(b.map(x=>x.src)),{cache:false});
+  if(Array.isArray(r))b.forEach((x,k)=>{if(typeof r[k]==='string'&&r[k].trim())x.out=r[k]});
+  $('bar').firstChild.style.width=Math.min(100,(i+B)/items.length*100)+'%'}
+  $('pmsg').textContent='แปลเสร็จแล้ว';toReview()
+ }catch(e){$('pmsg').textContent='ผิดพลาด: '+(e.message||e.code)+' — แก้ไขเองหรือลองใหม่';$('go').disabled=false}
+};
+$('skip').onclick=toReview;
+
+// ---------- ตรวจทาน ----------
+function toReview(){step(3);$('s3').classList.remove('hid');renderTbl()}
+function renderTbl(){
+ $('tbl').innerHTML=items.map(x=>`<div class="it"><small>${esc(x.p)} · ${esc(x.key)}</small>${esc(x.src)}<textarea data-id="${x.id}">${esc(x.out)}</textarea></div>`).join('');
+ $('tbl').oninput=e=>{const t=e.target;if(t.dataset.id!=null)items[+t.dataset.id].out=t.value};
+ $('stat').textContent=`(${items.filter(x=>x.out!==x.src).length}/${items.length} แปลแล้ว)`}
+
+// ---------- ตรวจ + แก้อัตโนมัติ ----------
+const PH=/%(\d+\$)?[sdfxXc@]|%%|\{[\w]*\}|\\n/g;
+const droid=s=>s.replace(/\\?'/g,"\\'").replace(/(^|[^\\])"/g,'$1\\"').replace(/\\@/g,'@');
+$('chk').onclick=async()=>{
+ step(4);$('s4').classList.remove('hid');$('rep').innerHTML='กำลังตรวจสอบ…';$('dl').disabled=true;
+ const R=[],add=(c,t)=>R.push([c,t]);fixes=[];
+ // 1 placeholder
+ let bad=0,fixed=0;
+ items.forEach(x=>{const a=(x.src.match(PH)||[]).sort().join('|'),b=(x.out.match(PH)||[]).sort().join('|');
+  if(a!==b){bad++;x.out=x.src;fixed++}});
+ add(bad?'wn':'ok',bad?`placeholder ไม่ตรงต้นฉบับ ${bad} รายการ (เสี่ยง force close / FormatException) → <b>แก้อัตโนมัติ:</b> คืนค่าเดิมให้ ${fixed} รายการ`:'placeholder (%s, %d, {0}) ครบถ้วนทุกรายการ');
+ // 2 ว่าง
+ const empty=items.filter(x=>!x.out.trim());empty.forEach(x=>x.out=x.src);
+ add(empty.length?'wn':'ok',empty.length?`พบคำแปลว่าง ${empty.length} รายการ → <b>แก้อัตโนมัติ:</b> ใช้ข้อความเดิม`:'ไม่มีคำแปลว่าง');
+ // 3 apostrophe / XML
+ const aps=items.filter(x=>x.kind==='xml'&&/(^|[^\\])['"]/.test(x.out)).length;
+ add(aps?'wn':'ok',aps?`มีเครื่องหมาย ' หรือ " ที่ไม่ escape ${aps} รายการ (ทำให้ aapt คอมไพล์พัง) → <b>แก้อัตโนมัติ:</b> ใส่ \\ ให้ตอนสร้างไฟล์`:'เครื่องหมายอัญประกาศปลอดภัย');
+ // 4 โครงสร้าง
+ let man=0,dex=0,arsc=0,sig=0,so=0,splitKeys=[];
+ targets.forEach(t=>{const n=Object.keys(t.zip.files);
+  if(n.includes('AndroidManifest.xml'))man++;if(n.some(x=>/^classes\d*\.dex$/.test(x)))dex++;if(n.includes('resources.arsc'))arsc++;
+  const s=n.filter(x=>/^META-INF\/.+\.(SF|RSA|DSA|EC)$/i.test(x));sig+=s.length;so+=n.filter(x=>/\.so$/.test(x)).length;splitKeys.push(s.length)});
+ add(man===targets.length?'ok':'er',man===targets.length?'AndroidManifest.xml ครบทุกแพ็กเกจ (ไม่ถูกแก้ไข ชื่อแพ็กเกจไม่เปลี่ยน → ไม่ชนกับแอปเดิม)':`ขาด AndroidManifest.xml ${targets.length-man} แพ็กเกจ — ไฟล์อาจไม่ใช่ APK ที่สมบูรณ์ (จะติดตั้งไม่ได้)`);
+ add(dex?'ok':'wn',dex?'classes.dex คงเดิมทุกไบต์ (ไม่แตะโค้ด → ลดความเสี่ยง force close)':'ไม่พบ classes.dex (อาจเป็น split ทรัพยากรล้วน)');
+ add(arsc?'ok':'wn','resources.arsc '+(arsc?'คงเดิม และจะถูกบีบอัดแบบ STORE เพื่อให้ผ่านข้อกำหนด Android 11+':'ไม่พบ (แอปเก่าหรือเป็น split)'));
+ if(sig){add('wn',`พบลายเซ็นเดิม ${sig} ไฟล์ — เมื่อแก้ไฟล์แล้วลายเซ็นไม่ตรง (INSTALL_PARSE_FAILED / signature mismatch) → <b>แก้อัตโนมัติ:</b> ลบ META-INF เดิมออก`)}
+ else add('ok','ไม่มีลายเซ็นเดิมค้างอยู่');
+ if(isContainer)add('wn','ไฟล์เป็นชุดหลาย APK (split) — ต้อง<b>เซ็นทุกไฟล์ด้วยกุญแจเดียวกัน</b> มิฉะนั้นติดตั้งไม่ผ่าน (ดูคำสั่งด้านล่าง)');
+ add('er','⚠️ APK ที่ได้ <b>ยังไม่ได้เซ็น</b> — เบราว์เซอร์ไม่สามารถเซ็นแบบ v2/v3 ที่ Android รุ่นใหม่บังคับได้ ต้องเซ็นอีกขั้น (1 คำสั่ง ดูด้านล่าง) จึงจะติดตั้งได้');
+ $('rep').innerHTML=R.map(r=>`<div class="chk ${r[0]}">${r[1]}</div>`).join('');
+ $('dl').disabled=false;$('dl').dataset.ready=1;
+};
+
+// ---------- สร้างไฟล์ + ดาวน์โหลด ----------
+async function build(){
+ const bylist={};items.forEach(x=>{(bylist[x.ti+'|'+x.p]=bylist[x.ti+'|'+x.p]||[]).push(x)});
+ for(const k in bylist){const L=bylist[k],t=targets[L[0].ti],p=L[0].p;
+  if(L[0].kind==='xml'){const d=new DOMParser().parseFromString(await t.zip.file(p).async('string'),'application/xml');
+   const ns=[...d.querySelectorAll('string,item')].filter(n=>n.getAttribute('translatable')!=='false'&&!n.children.length);
+   L.forEach(x=>{const n=ns.find(m=>m.getAttribute('data-i')==null&&false)||null});
+   // จับคู่ตามลำดับเดิม
+   const all=[...d.querySelectorAll('string,item')];L.forEach(x=>{const n=all[x.idx];if(n)n.textContent=droid(x.out)});
+   t.zip.file(p,new XMLSerializer().serializeToString(d))}
+  else if(L[0].kind==='json'){const o=JSON.parse(await t.zip.file(p).async('string'));L.forEach(x=>{let c=o;for(let i=0;i<x.path.length-1;i++)c=c[x.path[i]];c[x.path[x.path.length-1]]=x.out});t.zip.file(p,JSON.stringify(o))}
+  else{const ls=(await t.zip.file(p).async('string')).split(/\r?\n/);L.forEach(x=>{ls[x.idx]=ls[x.idx].replace(x.src,x.out.replace(/\n/g,'\\n'))});t.zip.file(p,ls.join('\n'))}}
+ // ลบลายเซ็นเดิม + STORE
+ for(const t of targets){for(const n of Object.keys(t.zip.files)){if(/^META-INF\/.+\.(SF|RSA|DSA|EC|MF)$/i.test(n))t.zip.remove(n);
+   else if(n==='resources.arsc'||/\.so$/.test(n)){t.zip.file(n,await t.zip.file(n).async('uint8array'),{compression:'STORE'})}}
+  if(t.parent){const b=await t.zip.generateAsync({type:'uint8array',compression:'DEFLATE'});t.parent.file(t.path,b,{compression:'STORE'})}}
+ const root=isContainer?targets[0].parent:targets[0].zip;
+ return root.generateAsync({type:'blob',compression:'DEFLATE'});
+}
+$('dl').onclick=async()=>{
+ $('dl').disabled=true;$('dl').textContent='กำลังสร้างไฟล์…';step(5);
+ try{const blob=await build();const base=file.name.replace(/\.[^.]+$/,'')+'_translated';
+  const ext=file.name.split('.').pop().toLowerCase();
+  const dls=await window.claude.use('downloads');
+  if(!dls)throw new Error('มุมมองนี้ดาวน์โหลดไม่ได้');
+  await dls.save({filename:base+'.zip',data:blob});
+  $('after').innerHTML=`<div class="chk ok">✅ บันทึกแล้ว — <b>เปลี่ยนนามสกุลเป็น .${ext==='zip'?'apk':ext}</b> (ระบบอนุญาตให้ดาวน์โหลดเฉพาะ .zip)</div>
+  <b>ขั้นตอนสุดท้าย: จัดแนว + เซ็น</b> (Android SDK build-tools)
+  <pre>zipalign -p -f 4 ${base}.apk aligned.apk
+keytool -genkey -v -keystore my.jks -alias k -keyalg RSA -keysize 2048 -validity 10000
+apksigner sign --ks my.jks aligned.apk
+apksigner verify aligned.apk</pre>
+  ${isContainer?'<p class="s">แพ็กเกจแบบ split: แตกไฟล์ → เซ็นทุก .apk ด้วย my.jks เดียวกัน → ติดตั้งด้วย <code>adb install-multiple *.apk</code> หรือ SAI</p>':''}
+  <p class="s">หากเคยติดตั้งแอปต้นฉบับ ต้องถอนการติดตั้งก่อน เพราะลายเซ็นต่างกัน</p>`;
+ }catch(e){$('after').innerHTML='<div class="chk er">ไม่สำเร็จ: '+esc(e.message||e.code)+'</div>'}
+ $('dl').textContent='ดาวน์โหลดไฟล์';$('dl').disabled=false;
+};
+</script></body></html>
